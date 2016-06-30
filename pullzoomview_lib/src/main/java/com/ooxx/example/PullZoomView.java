@@ -50,21 +50,33 @@ public class PullZoomView extends ScrollView{
 
     private ViewGroup.LayoutParams mLayoutParams;
 
+    private Status mStatus = Status.normal;
+
+    private enum Status {
+        normal,
+        pull_zoom
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
-
         if (!canScrollUp()){
             switch (ev.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     mInitX = ev.getX();
                     mInitY = ev.getY();
                     mOrigHeight = mViewToScale.getHeight();
+                    mStatus = Status.pull_zoom;
                     return true;
 
                 case MotionEvent.ACTION_MOVE:
+                    if (mStatus != Status.pull_zoom){
+                        break;
+                    }
+
                     mCurX = ev.getX();
                     mCurY = ev.getY();
-                    if ( !canScrollUp() && mCurY - mInitY < 0){
+                    if ( mCurY - mInitY < 0){
+                        mStatus = Status.normal;
                         break;
                     }
                     mLayoutParams = mViewToScale.getLayoutParams();
@@ -73,9 +85,14 @@ public class PullZoomView extends ScrollView{
                     return true;
 
                 case MotionEvent.ACTION_UP:
+                case MotionEvent.ACTION_CANCEL:
+                    if (mStatus != Status.pull_zoom){
+                        break;
+                    }
                     mLayoutParams = mViewToScale.getLayoutParams();
                     mLayoutParams.height = mOrigHeight;
                     mViewToScale.setLayoutParams(mLayoutParams);
+                    mStatus = Status.normal;
                     return true;
             }
         }
